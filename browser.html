@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OBS Source</title>
+  <style>
+    body { margin: 0; background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    img, video, audio, iframe { max-width: 100%; max-height: 100%; display: none; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <img id="img" />
+  <audio id="audio" controls></audio>
+  <video id="video" controls autoplay></video>
+  <iframe id="ytplayer" allowfullscreen></iframe>
+
+  <script>
+    const ws = new WebSocket("ws://" + location.hostname + ":8080");
+    const img = document.getElementById("img");
+    const audio = document.getElementById("audio");
+    const video = document.getElementById("video");
+    const ytplayer = document.getElementById("ytplayer");
+
+    function hideAll() {
+      img.style.display = "none";
+      audio.style.display = "none";
+      video.style.display = "none";
+      ytplayer.style.display = "none";
+    }
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      hideAll();
+
+      if (data.type === "video") {
+        ytplayer.src = "https://www.youtube.com/embed/" + new URL(data.url).searchParams.get("v") + "?autoplay=1";
+        ytplayer.style.display = "block";
+      } else if (data.type === "image") {
+        img.src = data.url;
+        img.style.display = "block";
+      } else if (data.type === "audio") {
+        audio.src = data.url;
+        audio.style.display = "block";
+        audio.play();
+      } else if (data.type === "localvideo") {
+        video.src = data.url;
+        video.style.display = "block";
+        video.play();
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kick Stream Control Panel</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: white; padding: 20px; }
+    input, button { padding: 10px; font-size: 16px; width: 100%; margin: 5px 0; }
+    button { background: #00c853; color: white; border: none; cursor: pointer; }
+    form { margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <h2>Play YouTube Video</h2>
+  <form id="videoForm">
+    <input type="text" id="videoUrl" placeholder="YouTube URL" required />
+    <button type="submit">Play Video</button>
+  </form>
+
+  <h2>Upload and Show Image</h2>
+  <form id="imageForm" enctype="multipart/form-data">
+    <input type="file" id="imageFile" accept="image/*" required />
+    <button type="submit">Upload Image</button>
+  </form>
+
+  <h2>Upload and Play Audio</h2>
+  <form id="audioForm" enctype="multipart/form-data">
+    <input type="file" id="audioFile" accept="audio/*" required />
+    <button type="submit">Upload Audio</button>
+  </form>
+
+  <h2>Upload and Play Video</h2>
+  <form id="localVideoForm" enctype="multipart/form-data">
+    <input type="file" id="localVideoFile" accept="video/*" required />
+    <button type="submit">Upload Video</button>
+  </form>
+
+  <script>
+    const postJSON = async (type, url) => {
+      await fetch('/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, url })
+      });
+    };
+
+    document.getElementById('videoForm').onsubmit = async e => {
+      e.preventDefault();
+      await postJSON('video', document.getElementById('videoUrl').value);
+      alert('YouTube video sent!');
+    };
+
+    const uploadAndSend = (formId, inputId, type) => {
+      document.getElementById(formId).onsubmit = async e => {
+        e.preventDefault();
+        const fileInput = document.getElementById(inputId);
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const res = await fetch(`/upload/${type}`, { method: 'POST', body: formData });
+        const { filename } = await res.json();
+        await postJSON(type, `/uploads/${filename}`);
+        alert(type.charAt(0).toUpperCase() + type.slice(1) + ' uploaded and sent!');
+      };
+    };
+
+    uploadAndSend('imageForm', 'imageFile', 'image');
+    uploadAndSend('audioForm', 'audioFile', 'audio');
+    uploadAndSend('localVideoForm', 'localVideoFile', 'localvideo');
+  </script>
+</body>
+</html>
